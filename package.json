@@ -1,0 +1,27 @@
+{
+  "name": "flow-visualizer",
+  "version": "0.0.1",
+  "description": "Interactive visualization of flow graphs.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adioo/flow-visualizer.git"
+  },
+  "keywords": [
+    "flow",
+    "visualization",
+    "interactive"
+  ],
+  "author": "Adrian Ottiker",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/adioo/flow-visualizer/issues"
+  },
+  "homepage": "https://github.com/adioo/flow-visualizer#readme",
+  "dependencies": {
+    "vis": "^4.16.1"
+  }
+}
