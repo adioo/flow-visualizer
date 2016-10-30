@@ -20,9 +20,16 @@ exports.init = function (args, ready) {
       },
     }, args.vis || {});
 
-    this.first = true;
+    this.index = {};
     this.nodes = new vis.DataSet();
     this.edges = new vis.DataSet();
+    this.nodes.add({
+        id: 'p_service',
+        label: 'Service',
+        level: 0,
+        shape: 'circle',
+        color: '#2E382E'
+    });
 
     if (!(this.view = document.querySelector(args.view))) {
         return ready(new Error('Flow-visualizer: DOM target not found.'));
@@ -54,63 +61,84 @@ exports.parse = function (args, data, next) {
         };
     }
 
-    const temp_index = {};
+    const index = this.index;
     const addNode = (node, target) => {
-        if (temp_index[node.id]) {
-            ++temp_index[node.id];
+        if (index[node.id]) {
+            ++index[node.id];
             return;
         }
-        temp_index[node.id] = 1;
+        index[node.id] = 1;
         target.push(node);
     };
 
     triples.forEach(triple => {
-
         //var subpage = subpages[i];
         //var subpageID = getNeutralId(subpage);
-        //if (nodes.getIds().indexOf(subpageID) == -1) {
-        //value: 1,
-        //level: level,
-        //color: getColor(level),
-        //parent: page,
-        //x: nodeSpawn[0],
-        //y: nodeSpawn[1]
-        
-        if (
-            triple[1] === 'http://schema.jillix.net/vocab/module' ||
-            triple[1] === 'http://schema.jillix.net/vocab/event'
-        ) {
-            addNode({id: triple[0], label: triple[0]}, data.nodes); 
-            addNode({id: triple[2], label: triple[2], shape: 'circle'}, data.nodes); 
-            data.edges.push({from: triple[0], to: triple[2]});
-        } else {
-            addNode({
-                id: triple[0],
-                label: triple[2]
-            }, data.nodes);
-        }
-
-        //}
-
         //if (!getEdgeConnecting(page, subpageID)) {
-        //color: getEdgeColor(level),
-        //level: level,
-        //selectionWidth:2,
-        //hoverWidth:0
-        //}
+        //if (nodes.getIds().indexOf(subpageID) == -1) {
+        //var nodeSpawn = getSpawnPosition(page);
+        //x: nodeSpawn[0]
+        //y: nodeSpawn[1]
+        switch (triple[1]) {
+            case 'http://schema.jillix.net/vocab/event':
+
+                addNode({
+                    id: triple[2],
+                    label: triple[2],
+                    level: 3,
+                    color: '#FAA613',
+                    type: 'event'
+                }, data.nodes); 
+
+                data.edges.push({
+                    from: triple[0],
+                    to: triple[2]
+                });
+
+                break;
+            case 'http://schema.jillix.net/vocab/module':
+
+                addNode({
+                    id: triple[0],
+                    label: triple[0],
+                    level:2,
+                    color: '#688E26',
+                    type: 'inst'
+                }, data.nodes); 
+
+                addNode({
+                    id: triple[2],
+                    label: triple[2],
+                    level:1,
+                    shape: 'circle',
+                    color: '#F43207',
+                    type: 'module'
+                }, data.nodes);
+
+                data.edges.push({
+                    from: triple[2],
+                    to: triple[0]
+                });
+
+                addNode({
+                    id: 'p_service' + triple[2],
+                    from: 'p_service',
+                    to: triple[2]
+                }, data.edges);
+
+                break;
+            default:
+                addNode({
+                    id: triple[0],
+                    label: triple[2],
+                    level: 2,
+                    type: 'inst',
+                    color: '#688E26'
+                }, data.nodes);
+        }
     });
  
     next(null, data);
-
-    /*const node;
-    if (data.expand) {
-        node = this.nodes.get(data.expand);
-    }
-
-    const level = node ? node.level + 1 : 0;
-
-    // Where new nodes should be spawned
-    var nodeSpawn = getSpawnPosition(page);*/
 };
 
 exports.add = function (args, data, next) {
