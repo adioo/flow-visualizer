@@ -28,8 +28,11 @@ exports.init = function (args, ready) {
         label: 'Service',
         level: 0,
         shape: 'circle',
-        color: '#2E382E'
+        color: '#4E96BA'
     });
+
+// TEMP DEV GLOBAL
+window.NODE_INDEX = this.index;
 
     if (!(this.view = document.querySelector(args.view))) {
         return ready(new Error('Flow-visualizer: DOM target not found.'));
@@ -45,7 +48,6 @@ exports.init = function (args, ready) {
     ready();
 };
 
-// TODO move this method to a graph utility module
 exports.parse = function (args, data, next) {
 
     let triples;
@@ -72,19 +74,54 @@ exports.parse = function (args, data, next) {
     };
 
     triples.forEach(triple => {
-        //var subpage = subpages[i];
-        //var subpageID = getNeutralId(subpage);
-        //if (!getEdgeConnecting(page, subpageID)) {
-        //if (nodes.getIds().indexOf(subpageID) == -1) {
         //var nodeSpawn = getSpawnPosition(page);
         //x: nodeSpawn[0]
         //y: nodeSpawn[1]
         switch (triple[1]) {
-            case 'http://schema.jillix.net/vocab/event':
+            case 'http://schema.jillix.net/vocab/dataHandler':
+            case 'http://schema.jillix.net/vocab/onceHandler':
+            case 'http://schema.jillix.net/vocab/streamHandler':
+            case 'http://schema.jillix.net/vocab/emit':
+                let type = triple[1].split('/').pop();
+                let label = type === 'emit' ? triple[2].split('/').pop() : triple[2].split('#').pop();
+
+                let color;
+                switch (type) {
+                    case 'dataHandler':
+                        color = '#74A4BC';
+                        break;
+                    case 'onceHandler':
+                        color = '#006E90';
+                        break;
+                    case 'streamHandler':
+                        color = '#AFD2E9';
+                        break;
+                    case 'emit':
+                        color = '#FAA613';
+                        break;
+                }
 
                 addNode({
+                    id: triple[0],
+                    label: label,
+                    level: 4,
+                    color: color,
+                    type: 'handler'
+                }, data.nodes);
+                break;
+
+            case 'http://schema.jillix.net/vocab/sequence':
+                addNode({
+                    id: triple[0] + triple[2],
+                    from: triple[0],
+                    to: triple[2]
+                }, data.edges);
+                break;
+
+            case 'http://schema.jillix.net/vocab/event':
+                addNode({
                     id: triple[2],
-                    label: triple[2],
+                    label: triple[2].split('/').pop(),
                     level: 3,
                     color: '#FAA613',
                     type: 'event'
@@ -96,29 +133,33 @@ exports.parse = function (args, data, next) {
                 });
 
                 break;
-            case 'http://schema.jillix.net/vocab/module':
-
-                addNode({
-                    id: triple[0],
-                    label: triple[0],
-                    level:2,
-                    color: '#688E26',
-                    type: 'inst'
-                }, data.nodes); 
+            case 'http://schema.jillix.net/vocab/ModuleInstanceConfig':
 
                 addNode({
                     id: triple[2],
                     label: triple[2],
-                    level:1,
-                    shape: 'circle',
-                    color: '#F43207',
-                    type: 'module'
+                    level:2,
+                    color: '#688E26',
+                    type: 'inst'
                 }, data.nodes);
 
-                data.edges.push({
-                    from: triple[2],
-                    to: triple[0]
-                });
+                addNode({
+                    id: triple[0] + triple[2],
+                    from: triple[0],
+                    to: triple[2]
+                }, data.edges);
+
+                break;
+            case 'http://schema.jillix.net/vocab/Module':
+
+                addNode({
+                    id: triple[2],
+                    label: triple[0].slice(1, -1),
+                    level:1,
+                    shape: 'circle',
+                    color: '#F46A4B',
+                    type: 'module'
+                }, data.nodes);
 
                 addNode({
                     id: 'p_service' + triple[2],
@@ -128,13 +169,7 @@ exports.parse = function (args, data, next) {
 
                 break;
             default:
-                addNode({
-                    id: triple[0],
-                    label: triple[2],
-                    level: 2,
-                    type: 'inst',
-                    color: '#688E26'
-                }, data.nodes);
+                console.error('Flow-visualizer.parse: Invalid triple "' + triple + '".');
         }
     });
  
