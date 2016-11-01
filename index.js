@@ -77,9 +77,6 @@ exports.parse = function (args, data, next) {
     };
 
     triples.forEach(triple => {
-        //var nodeSpawn = getSpawnPosition(page);
-        //x: nodeSpawn[0]
-        //y: nodeSpawn[1]
         switch (triple[1]) {
             case 'http://schema.jillix.net/vocab/dataHandler':
             case 'http://schema.jillix.net/vocab/onceHandler':
@@ -130,10 +127,29 @@ exports.parse = function (args, data, next) {
                     type: 'event'
                 }, data.nodes); 
 
-                data.edges.push({
+                addNode({
+                    id: triple[0] + triple[2],
                     from: triple[0],
                     to: triple[2]
-                });
+                }, data.edges);
+
+                break;
+            case 'http://schema.jillix.net/vocab/instance':
+
+                addNode({
+                    id: triple[2],
+                    label: triple[2],
+                    level:2,
+                    color: '#688E26',
+                    type: 'inst'
+                }, data.nodes);
+
+                addNode({
+                    id: triple[0] + triple[2],
+                    from: triple[0],
+                    to: triple[2],
+                    dashes: true
+                }, data.edges);
 
                 break;
             case 'http://schema.jillix.net/vocab/ModuleInstanceConfig':
