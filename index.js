@@ -173,7 +173,7 @@ exports.parse = function (args, data, next) {
 
                 addNode({
                     id: triple[2],
-                    label: triple[0].slice(1, -1),
+                    label: triple[0],
                     level:1,
                     shape: 'circle',
                     color: '#F46A4B',
