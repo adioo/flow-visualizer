@@ -31,9 +31,6 @@ exports.init = function (args, ready) {
         color: '#4E96BA'
     });
 
-// TEMP DEV GLOBAL
-window.NODE_INDEX = this.index;
-
     if (!(this.view = document.querySelector(args.view))) {
         return ready(new Error('Flow-visualizer: DOM target not found.'));
     }
@@ -42,6 +39,9 @@ window.NODE_INDEX = this.index;
         nodes: this.nodes,
         edges: this.edges
     }, args.vis);
+
+// TEMP DEV GLOBAL
+window.NODE_INDEX = this.index;
 
     interaction(this, args.interaction);
 
@@ -63,6 +63,7 @@ exports.parse = function (args, data, next) {
         };
     }
 
+    const pos = data.id ? this.network.getPositions(data.id)[data.id] : {x: 0, y: 0};
     const index = this.index;
     const addNode = (node, target) => {
         if (index[node.id]) {
@@ -70,6 +71,8 @@ exports.parse = function (args, data, next) {
             return;
         }
         index[node.id] = 1;
+        node.x = pos.x;
+        node.y = pos.y;
         target.push(node);
     };
 
