@@ -1,35 +1,34 @@
-'use strict'
+'use strict';
 
-//const vis = require('vis');
-const interaction = require('./lib/interaction');
+const Parser = require('./lib/parser');
+const Interaction = require('./lib/interaction');
 
 exports.init = function (args, ready) {
 
+    if (!args.parse) {
+        return ready(new Error('Flow-visualizer.init: No parse config found.'));
+    }
+
     args.vis = Object.assign({
-      nodes: {
-        shape: 'dot',
-        scaling: { min: 20,max: 30,
-          label: { min: 14, max: 30, drawThreshold: 9, maxVisible: 20 }
+        nodes: {
+            shape: 'dot',
+            scaling: { min: 20,max: 30,
+                label: { min: 14, max: 30, drawThreshold: 9, maxVisible: 20 }
+            },
+            font: {size: 14, face: 'Helvetica Neue, Helvetica, Arial'}
         },
-        font: {size: 14, face: 'Helvetica Neue, Helvetica, Arial'}
-      },
-      interaction: {
-        hover: true,
-        hoverConnectedEdges: false,
-        selectConnectedEdges: true,
-      },
+        interaction: {
+            hover: true,
+            hoverConnectedEdges: false,
+            selectConnectedEdges: true
+        }
     }, args.vis || {});
 
     this.index = {};
-    this.nodes = new vis.DataSet();
-    this.edges = new vis.DataSet();
-    this.nodes.add({
-        id: 'p_service',
-        label: 'Service',
-        level: 0,
-        shape: 'circle',
-        color: '#4E96BA'
-    });
+    this.types = args.types || {};
+    this.predicates = args.parse;
+    this.nodes = new vis.DataSet(args.nodes || []);
+    this.edges = new vis.DataSet(args.edges || []);
 
     if (!(this.view = document.querySelector(args.view))) {
         return ready(new Error('Flow-visualizer: DOM target not found.'));
@@ -40,10 +39,7 @@ exports.init = function (args, ready) {
         edges: this.edges
     }, args.vis);
 
-// TEMP DEV GLOBAL
-window.NODE_INDEX = this.index;
-
-    interaction(this, args.interaction);
+    Interaction(this, args.interaction);
 
     ready();
 };
@@ -64,134 +60,9 @@ exports.parse = function (args, data, next) {
     }
 
     const pos = data.id ? this.network.getPositions(data.id)[data.id] : {x: 0, y: 0};
-    const index = this.index;
-    const addNode = (node, target) => {
-        if (index[node.id]) {
-            ++index[node.id];
-            return;
-        }
-        index[node.id] = 1;
-        node.x = pos.x;
-        node.y = pos.y;
-        target.push(node);
-    };
 
-    triples.forEach(triple => {
-        switch (triple[1]) {
-            case 'http://schema.jillix.net/vocab/dataHandler':
-            case 'http://schema.jillix.net/vocab/onceHandler':
-            case 'http://schema.jillix.net/vocab/streamHandler':
-            case 'http://schema.jillix.net/vocab/emit':
-                let type = triple[1].split('/').pop();
-                let label = type === 'emit' ? triple[2].split('/').pop() : triple[2].split('#').pop();
+    Parser(this.predicates, triples, this.types, data, pos, this.index);
 
-                let color;
-                switch (type) {
-                    case 'dataHandler':
-                        color = '#74A4BC';
-                        break;
-                    case 'onceHandler':
-                        color = '#006E90';
-                        break;
-                    case 'streamHandler':
-                        color = '#AFD2E9';
-                        break;
-                    case 'emit':
-                        color = '#FAA613';
-                        break;
-                }
-
-                addNode({
-                    id: triple[0],
-                    label: label,
-                    level: 4,
-                    color: color,
-                    type: 'handler'
-                }, data.nodes);
-                break;
-
-            case 'http://schema.jillix.net/vocab/sequence':
-                addNode({
-                    id: triple[0] + triple[2],
-                    from: triple[0],
-                    to: triple[2]
-                }, data.edges);
-                break;
-
-            case 'http://schema.jillix.net/vocab/event':
-                addNode({
-                    id: triple[2],
-                    label: triple[2].split('/').pop(),
-                    level: 3,
-                    color: '#FAA613',
-                    type: 'event'
-                }, data.nodes); 
-
-                addNode({
-                    id: triple[0] + triple[2],
-                    from: triple[0],
-                    to: triple[2]
-                }, data.edges);
-
-                break;
-            case 'http://schema.jillix.net/vocab/instance':
-
-                addNode({
-                    id: triple[2],
-                    label: triple[2],
-                    level:2,
-                    color: '#688E26',
-                    type: 'inst'
-                }, data.nodes);
-
-                addNode({
-                    id: triple[0] + triple[2],
-                    from: triple[0],
-                    to: triple[2],
-                    dashes: true
-                }, data.edges);
-
-                break;
-            case 'http://schema.jillix.net/vocab/ModuleInstanceConfig':
-
-                addNode({
-                    id: triple[2],
-                    label: triple[2],
-                    level:2,
-                    color: '#688E26',
-                    type: 'inst'
-                }, data.nodes);
-
-                addNode({
-                    id: triple[0] + triple[2],
-                    from: triple[0],
-                    to: triple[2]
-                }, data.edges);
-
-                break;
-            case 'http://schema.jillix.net/vocab/Module':
-
-                addNode({
-                    id: triple[2],
-                    label: triple[0],
-                    level:1,
-                    shape: 'circle',
-                    color: '#F46A4B',
-                    type: 'module'
-                }, data.nodes);
-
-                addNode({
-                    id: 'p_service' + triple[2],
-                    from: 'p_service',
-                    to: triple[2]
-                }, data.edges);
-
-                break;
-            default:
-                console.error('Flow-visualizer.parse: Invalid triple "' + triple + '".');
-        }
-    });
- 
     next(null, data);
 };
 
@@ -203,6 +74,22 @@ exports.add = function (args, data, next) {
 
     data.nodes && this.nodes.add(data.nodes);
     data.edges && this.edges.add(data.edges);
+
+    next(null, data);
+};
+
+
+exports.remove = function (args, data, next) {
+    console.log('Flow-visualizer.remove:', args, data);
+    next(null, data);
+};
+
+exports.reset = function (args, data, next) {
+
+    this.network.setData({
+        nodes: data.nodes || [],
+        edges: data.edges || []
+    });
 
     next(null, data);
 };
