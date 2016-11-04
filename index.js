@@ -75,9 +75,10 @@ exports.add = function (args, data, next) {
     data.nodes && this.nodes.add(data.nodes);
     data.edges && this.edges.add(data.edges);
 
+    this.flow(this._name + '/dataChanged').write({ nodes: this.nodes._data, edges: this.edges._data });
+
     next(null, data);
 };
-
 
 exports.remove = function (args, data, next) {
     console.log('Flow-visualizer.remove:', args, data);
@@ -90,6 +91,20 @@ exports.reset = function (args, data, next) {
         nodes: data.nodes || [],
         edges: data.edges || []
     });
+
+    next(null, data);
+};
+
+exports.focus = function (args, data, next) {
+
+    if (!data.node) {
+        return next(new Error('Flow-visualizer.add: No node provided.'));
+    }
+
+    this.network.focus(data.node, {
+        scale: 1
+    });
+    this.network.setSelection({ nodes: [data.node] }, { unselectAll: true });
 
     next(null, data);
 };
