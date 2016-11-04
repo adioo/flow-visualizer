@@ -59,7 +59,11 @@ exports.parse = function (args, data, next) {
         };
     }
 
-    const pos = data.id ? this.network.getPositions(data.id)[data.id] : {x: 0, y: 0};
+    const pos = {x: 0, y: 0};
+    if (data.node) {
+        pos.x = data.node.x || 0;
+        pos.y = data.node.y || 0;
+    }
 
     Parser(this.predicates, triples, this.types, data, pos, this.index);
 
