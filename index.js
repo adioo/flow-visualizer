@@ -63,6 +63,9 @@ exports.parse = function (args, data, next) {
     if (data.node) {
         pos.x = data.node.x || 0;
         pos.y = data.node.y || 0;
+        pos.l = this.network.getBoundingBox(data.node.id);
+        pos.l = Math.sqrt(Math.pow(pos.l.top - pos.l.bottom, 2) + Math.pow(pos.l.right - pos.l.left, 2));
+        pos.parent = data.node.parent ? this.network.getPositions(data.node.parent)[data.node.parent] : {x: 0, y: 0};
     }
 
     Parser(this.predicates, triples, this.types, data, pos, this.index);
@@ -72,7 +75,7 @@ exports.parse = function (args, data, next) {
 
 exports.add = function (args, data, next) {
 
-    if (!data.nodes && !data.edges) {
+    if (!args.nodes && !args.edges && !data.nodes && !data.edges) {
         return next(new Error('Flow-visualizer.add: No nodes or edges found.'));
     }
 
@@ -85,7 +88,22 @@ exports.add = function (args, data, next) {
 };
 
 exports.remove = function (args, data, next) {
-    console.log('Flow-visualizer.remove:', args, data);
+    const self = this;
+
+    /*self.nodes.forEach(node => {
+        node.type === 'module' && self.nodes.remove(node.id);
+        self.index = 0;
+    });*/
+
+    this.nodes.clear();
+    this.edges.clear();
+    this.nodes.add({
+        id: 'p_service',
+        label: 'Service',
+        shape: 'circle',
+        type: 'project'
+    });
+    this.index = {};
     next(null, data);
 };
 
