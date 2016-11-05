@@ -24,7 +24,10 @@ exports.init = function (args, ready) {
         }
     }, args.vis || {});
 
-    this.index = {};
+    this.index = {
+        nodes: [],
+        edges: []
+    };
     this.types = args.types || {};
     this.predicates = args.parse;
     this.nodes = new vis.DataSet(args.nodes || []);
@@ -88,22 +91,22 @@ exports.add = function (args, data, next) {
 };
 
 exports.remove = function (args, data, next) {
-    const self = this;
 
-    /*self.nodes.forEach(node => {
-        node.type === 'module' && self.nodes.remove(node.id);
-        self.index = 0;
-    });*/
+    let ids = [];
+    const getChildren = (id, index) => {
+        if (index[id] && index[id].length) {
+            index[id].forEach(_id => {
+                ids.push(_id);
+                getChildren(_id, index);
+                index[_id] = null;
+            });
+        }
+    };
 
-    this.nodes.clear();
-    this.edges.clear();
-    this.nodes.add({
-        id: 'p_service',
-        label: 'Service',
-        shape: 'circle',
-        type: 'project'
-    });
-    this.index = {};
+    getChildren(data.node.id, this.index.nodes);
+    this.index.nodes[data.node.id] = [];
+    this.nodes.remove(ids);
+
     next(null, data);
 };
 
