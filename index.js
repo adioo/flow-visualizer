@@ -92,20 +92,32 @@ exports.add = function (args, data, next) {
 
 exports.remove = function (args, data, next) {
 
-    let ids = [];
-    const getChildren = (id, index) => {
-        if (index[id] && index[id].length) {
-            index[id].forEach(_id => {
-                ids.push(_id);
-                getChildren(_id, index);
-                index[_id] = null;
+    let nodes = [];
+    let edges = [];
+    const index = this.index;
+    const getChildren = (id) => {
+        if (index.nodes[id]) { 
+            index.nodes[id].out.forEach(edge => {
+                edges.push(edge);
+                index.edges[edge] = null;
+            });
+            index.nodes[id].children.forEach(_id => {
+                nodes.push(_id);
+                getChildren(_id);
+                index.nodes[_id] = null;//{children: [], out: []};
             });
         }
     };
 
-    getChildren(data.node.id, this.index.nodes);
-    this.index.nodes[data.node.id] = [];
-    this.nodes.remove(ids);
+    if (data.node && data.node.id) {
+        getChildren(data.node.id);
+        index.nodes[data.node.id] = null;//{children: [], out: []};
+        this.nodes.remove(nodes);
+    }
+
+    if (edges.length) {
+        this.edges.remove(edges);
+    }
 
     next(null, data);
 };
