@@ -3,10 +3,10 @@
 const Parser = require('./lib/parser');
 const Interaction = require('./lib/interaction');
 
-exports.init = function (args, ready) {
+exports.init = function (scope, inst, args, data, next) {
 
     if (!args.parse) {
-        return ready(new Error('Flow-visualizer.init: No parse config found.'));
+        return next(new Error('Flow-visualizer.init: No parse config found.'));
     }
 
     args.vis = Object.assign({
@@ -24,30 +24,30 @@ exports.init = function (args, ready) {
         }
     }, args.vis || {});
 
-    this.index = {
+    inst.index = {
         nodes: [],
         edges: []
     };
-    this.types = args.types || {};
-    this.predicates = args.parse;
-    this.nodes = new vis.DataSet(args.nodes || []);
-    this.edges = new vis.DataSet(args.edges || []);
+    inst.types = args.types || {};
+    inst.predicates = args.parse;
+    inst.nodes = new vis.DataSet(args.nodes || []);
+    inst.edges = new vis.DataSet(args.edges || []);
 
-    if (!(this.view = document.querySelector(args.view))) {
-        return ready(new Error('Flow-visualizer: DOM target not found.'));
+    if (!(inst.view = document.querySelector(args.view))) {
+        return next(new Error('Flow-visualizer: DOM target not found.'));
     }
 
-    this.network = new vis.Network(this.view, {
-        nodes: this.nodes,
-        edges: this.edges
+    inst.network = new vis.Network(inst.view, {
+        nodes: inst.nodes,
+        edges: inst.edges
     }, args.vis);
 
-    Interaction(this, args.interaction);
+    Interaction(scope, inst, args.interaction);
 
-    ready();
+    next(null, data);
 };
 
-exports.parse = function (args, data, next) {
+exports.parse = function (scope, inst, args, data, next) {
 
     let triples;
     if (!(data instanceof Array) && args.key && data[args.key]) {
@@ -66,35 +66,35 @@ exports.parse = function (args, data, next) {
     if (data.node) {
         pos.x = data.node.x || 0;
         pos.y = data.node.y || 0;
-        pos.l = this.network.getBoundingBox(data.node.id);
+        pos.l = inst.network.getBoundingBox(data.node.id);
         pos.l = Math.sqrt(Math.pow(pos.l.top - pos.l.bottom, 2) + Math.pow(pos.l.right - pos.l.left, 2));
-        pos.parent = data.node.parent ? this.network.getPositions(data.node.parent)[data.node.parent] : {x: 0, y: 0};
+        pos.parent = data.node.parent ? inst.network.getPositions(data.node.parent)[data.node.parent] : {x: 0, y: 0};
     }
 
-    Parser(this.predicates, triples, this.types, data, pos, this.index);
+    Parser(inst.predicates, triples, inst.types, data, pos, inst.index);
 
     next(null, data);
 };
 
-exports.add = function (args, data, next) {
+exports.add = function (scope, inst, args, data, next) {
 
     if (!args.nodes && !args.edges && !data.nodes && !data.edges) {
         return next(new Error('Flow-visualizer.add: No nodes or edges found.'));
     }
 
-    data.nodes && this.nodes.add(data.nodes);
-    data.edges && this.edges.add(data.edges);
+    data.nodes && inst.nodes.add(data.nodes);
+    data.edges && inst.edges.add(data.edges);
 
-    this.flow(this._name + '/dataChanged').write({ nodes: this.nodes._data, edges: this.edges._data });
+    scope.flow(inst._name + '/dataChanged').write({ nodes: inst.nodes._data, edges: inst.edges._data });
 
     next(null, data);
 };
 
-exports.remove = function (args, data, next) {
+exports.remove = function (scope, inst, args, data, next) {
 
     let nodes = [];
     let edges = [];
-    const index = this.index;
+    const index = inst.index;
     const getChildren = (id) => {
         if (index.nodes[id]) { 
             index.nodes[id].out.forEach(edge => {
@@ -112,19 +112,19 @@ exports.remove = function (args, data, next) {
     if (data.node && data.node.id) {
         getChildren(data.node.id);
         index.nodes[data.node.id] = null;//{children: [], out: []};
-        this.nodes.remove(nodes);
+        inst.nodes.remove(nodes);
     }
 
     if (edges.length) {
-        this.edges.remove(edges);
+        inst.edges.remove(edges);
     }
 
     next(null, data);
 };
 
-exports.reset = function (args, data, next) {
+exports.reset = function (scope, inst, args, data, next) {
 
-    this.network.setData({
+    inst.network.setData({
         nodes: data.nodes || [],
         edges: data.edges || []
     });
@@ -132,16 +132,16 @@ exports.reset = function (args, data, next) {
     next(null, data);
 };
 
-exports.focus = function (args, data, next) {
+exports.focus = function (scope, inst, args, data, next) {
 
     if (!data.node) {
         return next(new Error('Flow-visualizer.add: No node provided.'));
     }
 
-    this.network.focus(data.node, {
+    inst.network.focus(data.node, {
         scale: 1
     });
-    this.network.setSelection({ nodes: [data.node] }, { unselectAll: true });
+    inst.network.setSelection({ nodes: [data.node] }, { unselectAll: true });
 
     next(null, data);
 };
