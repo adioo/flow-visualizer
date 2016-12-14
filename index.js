@@ -40,7 +40,7 @@ exports.init = function (scope, state, args, data, next) {
     state.edges = new vis.DataSet(args.edges || []);
 
     if (!(state.view = document.querySelector(args.view))) {
-        return next(new Error('Flow-visualizer: DOM target not found.'));
+        return next(new Error('Flow-visualizer: DOM data.node not found.'));
     }
 
     state.network = new vis.Network(state.view, {
@@ -69,11 +69,13 @@ exports.parse = function (scope, state, args, data, next) {
         };
     }
 
+    data.node = data.node || {id: ''};
+
     const pos = {x: 0, y: 0};
     if (data.node) {
         pos.x = data.node.x || 0;
         pos.y = data.node.y || 0;
-        pos.l = state.network.getBoundingBox(data.node.id);
+        pos.l = state.network.getBoundingBox(data.node.id) || {top: 0, left: 0, bottom: 0, right: 0};
         pos.l = Math.sqrt(Math.pow(pos.l.top - pos.l.bottom, 2) + Math.pow(pos.l.right - pos.l.left, 2));
         pos.parent = data.node.parent ? state.network.getPositions(data.node.parent)[data.node.parent] : {x: 0, y: 0};
     }
