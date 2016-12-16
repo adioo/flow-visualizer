@@ -31,8 +31,8 @@ exports.init = function (scope, state, args, data, next) {
     }, args.vis || {});
 
     state.index = {
-        nodes: [],
-        edges: []
+        nodes: {},
+        edges: {}
     };
     state.types = args.types || {};
     state.predicates = args.parse;
