@@ -106,21 +106,23 @@ exports.remove = function (scope, state, args, data, next) {
     const index = state.index;
     const getChildren = (id) => {
         if (index.nodes[id]) { 
-            index.nodes[id].out.forEach(edge => {
+            index.nodes[id].o.forEach(edge => {
                 edges.push(edge);
                 index.edges[edge] = null;
             });
             index.nodes[id].children.forEach(_id => {
-                nodes.push(_id);
-                getChildren(_id);
-                index.nodes[_id] = null;//{children: [], out: []};
+                if (index.nodes[_id] && (index.nodes[_id].i === 0 || --index.nodes[_id].i === 0)) {
+                    nodes.push(_id);
+                    getChildren(_id);
+                    index.nodes[_id] = null;
+                }
             });
         }
     };
 
     if (data.node && data.node.id) {
         getChildren(data.node.id);
-        index.nodes[data.node.id] = null;//{children: [], out: []};
+        index.nodes[data.node.id] = null;
         state.nodes.remove(nodes);
     }
 
