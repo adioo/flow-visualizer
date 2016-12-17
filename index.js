@@ -106,14 +106,18 @@ exports.remove = function (scope, state, args, data, next) {
     const index = state.index;
     const getChildren = (id) => {
         if (index.nodes[id]) { 
+
+            // remove edges
             index.nodes[id].o.forEach(edge => {
                 edges.push(edge);
                 index.edges[edge] = null;
             });
+
+            // remove nodes
             index.nodes[id].children.forEach(_id => {
                 if (index.nodes[_id] && (index.nodes[_id].i === 0 || --index.nodes[_id].i === 0)) {
-                    nodes.push(_id);
                     getChildren(_id);
+                    nodes.push(_id);
                     index.nodes[_id] = null;
                 }
             });
@@ -122,7 +126,7 @@ exports.remove = function (scope, state, args, data, next) {
 
     if (data.node && data.node.id) {
         getChildren(data.node.id);
-        index.nodes[data.node.id] = null;
+        index.nodes[data.node.id].children = [];
         state.nodes.remove(nodes);
     }
 
