@@ -149,7 +149,7 @@ exports.reset = function (scope, state, args, data, next) {
 
 exports.focus = function (scope, state, args, data, next) {
 
-    let node_id = data.node ? (data.node.id || data.node) : null;
+    let node_id = data.focusTo || (data.node ? (data.node.id || data.node) : null);
     if (!node_id) {
         return next(new Error('Flow-visualizer.add: No node provided.'));
     }
