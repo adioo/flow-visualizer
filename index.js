@@ -2,6 +2,7 @@
 
 const Parser = require('./lib/parser');
 const Interaction = require('./lib/interaction');
+const Context = require('./lib/context');
 
 exports.init = function (scope, state, args, data, next) {
 
@@ -50,6 +51,7 @@ exports.init = function (scope, state, args, data, next) {
 
     // TODO create event to sequence args
     Interaction(scope, state, args.interaction);
+    Context.init(scope, state);
 
     next(null, data);
 };
@@ -162,13 +164,11 @@ exports.focus = function (scope, state, args, data, next) {
 
 exports.context = function (scope, state, args, data, next) {
 
-    let node_id = data.node ? (data.node.id || data.node) : null;
-    if (!node_id) {
+    if (!data.node) {
         return next(new Error('Flow-visualizer.context: No node provided.'));
     }
 
-    // TODO show context menu
-    console.log('TODO | Flow-visualizer.context: Show context menu for node "' + node_id + '"');
+    Context.toggle(state, data.node);
 
     next(null, data);
 };
