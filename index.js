@@ -151,11 +151,24 @@ exports.focus = function (scope, state, args, data, next) {
 
     let node_id = data.focusTo || (data.node ? (data.node.id || data.node) : null);
     if (!node_id) {
-        return next(new Error('Flow-visualizer.add: No node provided.'));
+        return next(new Error('Flow-visualizer.focus: No node provided.'));
     }
 
     state.network.focus(node_id, args);
     state.network.setSelection({ nodes: [node_id] }, { unselectAll: true });
+
+    next(null, data);
+};
+
+exports.context = function (scope, state, args, data, next) {
+
+    let node_id = data.node ? (data.node.id || data.node) : null;
+    if (!node_id) {
+        return next(new Error('Flow-visualizer.context: No node provided.'));
+    }
+
+    // TODO show context menu
+    console.log('TODO | Flow-visualizer.context: Show context menu for node "' + node_id + '"');
 
     next(null, data);
 };
