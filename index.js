@@ -149,14 +149,13 @@ exports.reset = function (scope, state, args, data, next) {
 
 exports.focus = function (scope, state, args, data, next) {
 
-    if (!data.node) {
+    let node_id = data.node ? (data.node.id || data.node) : null;
+    if (!node_id) {
         return next(new Error('Flow-visualizer.add: No node provided.'));
     }
 
-    state.network.focus(data.node, {
-        scale: 1
-    });
-    state.network.setSelection({ nodes: [data.node] }, { unselectAll: true });
+    state.network.focus(node_id, args);
+    state.network.setSelection({ nodes: [node_id] }, { unselectAll: true });
 
     next(null, data);
 };
