@@ -96,7 +96,9 @@ exports.add = function (scope, state, args, data, next) {
     data.nodes && state.nodes.add(data.nodes);
     data.edges && state.edges.add(data.edges);
 
-    scope.flow(state.event_if.dataChange).write({ nodes: state.nodes._data, edges: state.edges._data });
+    if (state.event_if.dataChange) {
+        scope.flow(state.event_if.dataChange).write({ nodes: state.nodes._data, edges: state.edges._data });
+    }
 
     next(null, data);
 };
