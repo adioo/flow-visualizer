@@ -3,6 +3,7 @@
 const Parser = require('./lib/parser');
 const Interaction = require('./lib/interaction');
 const Context = require('./lib/context');
+const Navigation = require('./lib/navigation');
 
 exports.init = function (scope, state, args, data, next) {
 
@@ -109,7 +110,7 @@ exports.remove = function (scope, state, args, data, next) {
     let edges = [];
     const index = state.index;
     const getChildren = (id) => {
-        if (index.nodes[id]) { 
+        if (index.nodes[id]) {
 
             // remove edges
             index.nodes[id].o.forEach(edge => {
@@ -158,6 +159,11 @@ exports.focus = function (scope, state, args, data, next) {
         return next(new Error('Flow-visualizer.focus: No node provided.'));
     }
 
+    // look in the data object for a custom scale value
+    if (data.scale) {
+        args.scale = data.scale;
+    }
+
     state.network.focus(node_id, args);
     state.network.setSelection({ nodes: [node_id] }, { unselectAll: true });
 
@@ -167,10 +173,25 @@ exports.focus = function (scope, state, args, data, next) {
 exports.context = function (scope, state, args, data, next) {
 
     if (!data.node) {
-        return next(new Error('Flow-visualizer.context: No node provided.'));
+        //return next(new Error('Flow-visualizer.context: No node provided.'));
+        return next(null, data);
     }
 
     Context.toggle(state, data.node);
 
     next(null, data);
 };
+
+exports.getSelectedNode = function (scope, state, args, data, next) {
+
+    let selectedNodes = state.network.getSelectedNodes();
+    data.node = (selectedNodes && selectedNodes.length) ? selectedNodes[0] : null;
+
+    next(null, data);
+};
+
+// export navigation methods
+// TODO needs refactor
+exports.navigateSelectedNode = Navigation.navigateSelectedNode;
+exports.toggleNode = Navigation.toggleNode;
+exports.changedFocusZoom = Navigation.changedFocusZoom;
