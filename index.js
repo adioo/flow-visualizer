@@ -51,7 +51,7 @@ exports.init = function (scope, state, args, data, next) {
     }, args.vis);
 
     // TODO create event to sequence args
-    Interaction(scope, state, args.interaction);
+    Interaction.init(scope, state, args.interaction);
     Context.init(scope, state);
 
     next(null, data);
@@ -152,24 +152,6 @@ exports.reset = function (scope, state, args, data, next) {
     next(null, data);
 };
 
-exports.focus = function (scope, state, args, data, next) {
-
-    let node_id = data.focusTo || (data.node ? (data.node.id || data.node) : null);
-    if (!node_id) {
-        return next(new Error('Flow-visualizer.focus: No node provided.'));
-    }
-
-    // look in the data object for a custom scale value
-    if (data.scale) {
-        args.scale = data.scale;
-    }
-
-    state.network.focus(node_id, args);
-    state.network.setSelection({ nodes: [node_id] }, { unselectAll: true });
-
-    next(null, data);
-};
-
 exports.context = function (scope, state, args, data, next) {
 
     if (!data.node) {
@@ -190,8 +172,10 @@ exports.getSelectedNode = function (scope, state, args, data, next) {
     next(null, data);
 };
 
-// export navigation methods
-// TODO needs refactor
+/* Export Navigation methods */
 exports.navigateSelectedNode = Navigation.navigateSelectedNode;
-exports.toggleNode = Navigation.toggleNode;
-exports.changedFocusZoom = Navigation.changedFocusZoom;
+
+/* Export Interaction methods */
+exports.focus = Interaction.focus;
+exports.expandCollapse = Interaction.expandCollapse;
+exports.changeFocusZoom = Interaction.changeFocusZoom;
