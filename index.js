@@ -7,17 +7,9 @@ const Navigation = require('./lib/navigation');
 
 exports.init = function (scope, state, args, data, next) {
 
-    if (!args.parse) {
-        return next(new Error('Flow-visualizer.init: No parse config found.'));
-    }
-
-    if (!args.events) {
-        return next(new Error('Flow-visualizer.init: No event interface config found.'));
-    }
-
-    state.event_if = args.events;
-
-    args.vis = Object.assign({
+    // create visjs only config object
+    state.config = {};
+    state.visConfig = {
         nodes: {
             shape: 'dot',
             scaling: { min: 20,max: 30,
@@ -30,28 +22,56 @@ exports.init = function (scope, state, args, data, next) {
             hoverConnectedEdges: false,
             selectConnectedEdges: true
         }
-    }, args.vis || {});
+    };
+
+    Object.keys(args).forEach((key) => {
+        switch (key) {
+            case "events":
+            case "parse":
+            case "view":
+            case "buttons":
+            case "colors":
+                state.config[key] = args[key];
+                return;
+            case "nodes":
+            case "edges":
+                state.visConfig[key] = {};
+                state.config[key] = {};
+                Object.keys(args[key]).forEach((subKey) => {
+                    switch (subKey) {
+                        case "events":
+                        case "types":
+                        case "expand":
+                        case "open":
+                            state.config[key][subKey] = args[key][subKey];
+                            return;
+                    }
+                    state.visConfig[key][subKey] = args[key][subKey];
+                });
+                return;
+        }
+
+        state.visConfig[key] = args[key];
+    });
+
+    if (!(state.config.view = document.querySelector(args.view))) {
+        return next(new Error('Flow-visualizer: DOM target not found.'));
+    }
 
     state.index = {
         nodes: {},
         edges: {}
     };
-    state.types = args.types || {};
-    state.predicates = args.parse;
-    state.nodes = new vis.DataSet(args.nodes || []);
-    state.edges = new vis.DataSet(args.edges || []);
 
-    if (!(state.view = document.querySelector(args.view))) {
-        return next(new Error('Flow-visualizer: DOM data.node not found.'));
-    }
+    state.nodes = new vis.DataSet([]);
+    state.edges = new vis.DataSet([]); 
 
-    state.network = new vis.Network(state.view, {
+    state.network = new vis.Network(state.config.view, {
         nodes: state.nodes,
         edges: state.edges
-    }, args.vis);
+    }, state.visConfig);
 
-    // TODO create event to sequence args
-    Interaction.init(scope, state, args.interaction);
+    Interaction.init(scope, state);
     Context.init(scope, state);
 
     next(null, data);
@@ -83,7 +103,7 @@ exports.parse = function (scope, state, args, data, next) {
         pos.parent = data.node.parent ? state.network.getPositions(data.node.parent)[data.node.parent] : {x: 0, y: 0};
     }
 
-    Parser(state.predicates, triples, state.types, data, pos, state.index);
+    Parser(state.config, triples, data, pos, state.index);
 
     next(null, data);
 };
@@ -97,8 +117,12 @@ exports.add = function (scope, state, args, data, next) {
     data.nodes && state.nodes.add(data.nodes);
     data.edges && state.edges.add(data.edges);
 
-    if (state.event_if.dataChange) {
-        scope.flow(state.event_if.dataChange).write({ nodes: state.nodes._data, edges: state.edges._data });
+    // emit data change event
+    if (state.config.events.dataChange) {
+        scope.flow(state.config.events.dataChange).write({
+            nodes: state.nodes._data,
+            edges: state.edges._data
+        });
     }
 
     next(null, data);
@@ -155,8 +179,8 @@ exports.reset = function (scope, state, args, data, next) {
 exports.context = function (scope, state, args, data, next) {
 
     if (!data.node) {
-        //return next(new Error('Flow-visualizer.context: No node provided.'));
-        return next(null, data);
+        return next(new Error('Flow-visualizer.context: No node provided.'));
+        //return next(null, data);
     }
 
     Context.toggle(state, data.node);
