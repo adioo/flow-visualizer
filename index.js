@@ -83,8 +83,7 @@ exports.parse = function (scope, state, args, data, next) {
         pos.parent = data.node.parent ? state.network.getPositions(data.node.parent)[data.node.parent] : {x: 0, y: 0};
     }
 
-    Parser(state.predicates, triples, state.types, data, pos, state.index);
-
+    Parser(state.predicates, triples, state.types, data, pos, args.onlyParse ? { nodes: {}, edges: {}} : state.index);
     next(null, data);
 };
 
@@ -94,7 +93,16 @@ exports.add = function (scope, state, args, data, next) {
         return next(new Error('Flow-visualizer.add: No nodes or edges found.'));
     }
 
-    data.nodes && state.nodes.add(data.nodes);
+    // only add nodes that do not already exist
+    let nodes = [];
+    data.nodes.forEach(node => {
+        let exists = state.nodes.get(node.id);
+        if (!exists) {
+            nodes.push(node);
+        }
+    });
+
+    state.nodes.add(nodes);
     data.edges && state.edges.add(data.edges);
 
     if (state.event_if.dataChange) {
