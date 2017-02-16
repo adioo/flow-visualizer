@@ -15,6 +15,7 @@
     "visualization",
     "interactive"
   ],
+  "flow": "flow.js",
   "author": "Adrian Ottiker",
   "license": "MIT",
   "bugs": {
