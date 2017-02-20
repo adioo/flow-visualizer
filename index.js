@@ -65,6 +65,7 @@ function buildOptions (config) {
 function VIS (config) {
     // parse the config
     let options = buildOptions(config);
+    this.options = options;
 
     // init all modules
     this.visualization = new Visualization({
