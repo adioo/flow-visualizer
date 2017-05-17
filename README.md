@@ -25,7 +25,7 @@ see vis.js docs for more [options](http://visjs.org/docs/network/#options)
                 },
                 hover: {
                     border: 'COLOR_CODE',
-                    background": 'COLOR_CODE'
+                    background: 'COLOR_CODE'
                 }
             }
         },
@@ -75,10 +75,10 @@ see vis.js docs for more [options](http://visjs.org/docs/network/#options)
                 }
             },
             triples: {
-                "RDF_TRIPLE_PREDICATE_IRI": {
-                    "nodes/edges": [{
-                        "object": ["ELEMENT_PROPERTY"], // the triple object will be added to the created node/edge
-                        "subject": ["ELEMENT_PROPERTY"] // the triple subject will be added to the created node/edge
+                RDF_TRIPLE_PREDICATE_IRI: {
+                    nodes/edges: [{
+                        object: [ELEMENT_PROPERTY], // the triple object will be added to the created node/edge
+                        subject: [ELEMENT_PROPERTY] // the triple subject will be added to the created node/edge
                     }]
                 }
             }
