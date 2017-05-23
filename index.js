@@ -2,9 +2,11 @@
 
 // Dependencies
 const Vis = require('vis');
-const Events = require('events');
+const Events = require('./lib/Events');
 const Parser = require('./lib/Parser');
 const Manipulation = require('./lib/Manipulation');
+const Interaction = require('./lib/Interaction');
+const Navigation = require('./lib/Navigation');
 
 // const values
 const CONFIG_DEFAULTS = {
@@ -15,7 +17,7 @@ const CONFIG_DEFAULTS = {
 };
 
 module.exports = (config) => {
-    let self = new Events();
+    let self = {};
 
     // check config integrity
     checkConfig(config);
@@ -40,7 +42,6 @@ module.exports = (config) => {
         edges: self.edges
     }, self.config.vis);
 
-
     // export visualization methods
     self.add = Manipulation.add;
     self.remove = Manipulation.remove;
@@ -52,6 +53,11 @@ module.exports = (config) => {
 
         return node;
     };
+    self.events = Events;
+    self.focus = Interaction.focus;
+    self.zoom = Interaction.zoom;
+    self.expandCollapse = Interaction.expandCollapse;
+    self.navigate = Navigation.navigate;
 
     return self;
 };
